@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiz Master</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#6100fe" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" sizes="180x180" href="images/1.png" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <style>
+:root {
+    --main-color: #cc2b5e;
+    --main-color2: #753a88;
+    /* NEW: Variable for a darkened version of main-color2 */
+    --main-color2-darkened: #5e2f6c; /* Default value, will be updated by JS */
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to right, var(--main-color), var(--main-color2));
+    display: flex;
+    flex-direction: column; /* Changed for sticky footer */
+    /* Removed justify-content: center; align-items: center; from body */
+    min-height: 100vh; /* Changed height to min-height for sticky footer */
+    transition: background 0.5s ease;
+    color: white;
+}
+
+.quiz-container {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 15px;
+    padding: 1rem 1.3rem; /* Decreased padding to make it smaller */
+    max-width: 400px; /* Also decreased max-width for a smaller overall card */
+    max-height: 600px;
+    width: 90%;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    text-align: center;
+    transition: background 0.5s ease;
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+}
+
+h1, h2 {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin: 10px 0 5px;
+    font-weight: bold;
+    text-align: left;
+}
+
+select, input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.3);
+    /* ADJUSTED: Background to semi-transparent white */
+    background: rgba(255, 255, 255, 0.1);
+    color: white; /* Changed to white for better readability on translucent background */
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    /* OPTIONAL: Custom arrow for select element */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); /* White arrow */
+    background-repeat: no-repeat;
+    background-position: right 0.7em top 50%, 0 0;
+    background-size: 0.65em auto, 100%;
+    padding-right: 2.5em; /* Make space for the arrow */
+}
+
+/* NEW: Styles for select options (for readability) */
+select option {
+    color: black; /* Make option text readable on default white dropdown background */
+    background-color: white; /* This tries to set the background but often ignored by browsers */
+}
+
+select:focus, input[type="number"]:focus {
+    outline: none;
+    border-color: white;
+}
+
+button {
+    margin-top: 1.5rem;
+    padding: 0.7rem 1.5rem;
+    background: var(--main-color);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+button:hover {
+    background: var(--main-color2);
+}
+
+.hide {
+    display: none !important;
+}
+
+/* NEW: Styles for the question counter element */
+#question-counter {
+    font-size: 1.5rem; /* Adjust size as needed */
+    font-weight: bold;
+    color: var(--main-color2); /* Use your accent color */
+    margin-bottom: 0.5rem; /* ADJUSTED: Increased space */
+    text-align: center; /* Ensure it's centered */
+    min-height: 20px; /* Prevent layout shift if text changes */
+}
+
+/* Styles for quiz-box and its contents */
+#quiz-box {
+    display: flex; /* Make quiz-box a flex container */
+    flex-direction: column; /* Stack its children vertically */
+    align-items: center; /* Center children horizontally */
+    width: 100%; /* Ensure it takes full width of parent */
+}
+
+/* NEW: Styles for the header row containing quiz title and timer */
+.header-row {
+    display: flex; /* Make this a flex container */
+    justify-content: space-between; /* Puts items at opposite ends */
+    align-items: center; /* Vertically centers items */
+    width: 100%; /* Ensure it spans the full width of quiz-box */
+    margin-bottom: 0.5rem; /* Decreased space */
+}
+
+.header-row #quiz-title { /* Styles for the quiz title inside the header row */
+    margin: 0; /* Remove default margin from h1 */
+    font-size: 1.8rem; /* Adjust font size to match screenshot */
+    color: var(--main-color2); /* Use the accent color for the title */
+    text-align: left; /* Align to the left within its flex space */
+    flex-grow: 1; /* Allow it to grow and push timer to the right */
+}
+
+#quiz-box #timer { /* Styles for the timer when inside header-row */
+    position: static; /* Remove absolute positioning, let flexbox handle its position */
+    margin: 0; /* Remove any default margins that might interfere */
+    font-weight: bold;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    z-index: auto; /* Reset z-index if it's no longer absolutely positioned */
+}
+
+#quiz-box h2 { /* This applies to the main question h2 */
+    min-height: 20px; /* to keep space consistent */
+    font-size: 1.4rem;
+    margin-top: 0.3rem; /* ADJUSTED: Increased space */
+    margin-bottom: 0.1rem; /* Decreased space */
+}
+
+#answer-buttons {
+    list-style: none;
+    padding: 0;
+    margin: 0.1rem 0 0.1rem 0; /* Decreased bottom margin to 0.3rem */
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    min-height: 250px;
+    justify-content: flex-start;
+}
+
+#answer-buttons li {
+    background: rgba(255, 255, 255, 0.15); /* Keep original background for li */
+    padding: 12px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.3s ease;
+    user-select: none;
+}
+
+#answer-buttons li:hover {
+    background: rgba(255, 255, 255, 0.3); /* Keep original hover background for li */
+}
+
+#answer-buttons li button {
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+
+/* ADJUSTED: Apply background to the button directly, ensure text color is white */
+#answer-buttons li button.correct {
+    background: #28a745; /* Green for correct button */
+    color: white; /* Ensure text is readable on green */
+}
+
+/* ADJUSTED: Apply background to the button directly, ensure text color is white */
+#answer-buttons li button.wrong {
+    background: #dc3545; /* Red for wrong button */
+    color: white; /* Ensure text is readable on red */
+}
+
+#answer-buttons li button:disabled {
+    cursor: not-allowed;
+}
+
+.progress-bar {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    height: 12px;
+    width: 100%;
+    margin: 0.3rem 0 0.5rem 0; /* ADJUSTED: Decreased top margin to 0.3rem */
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--main-color);
+    border-radius: 12px;
+    transition: width 0.3s ease;
+}
+
+#next-btn {
+    margin-top: 0.5rem; /* ADJUSTED: Decreased top margin */
+    padding: 0.7rem 1.5rem;
+    background: var(--main-color2);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#next-btn:hover {
+    background: var(--main-color);
+}
+
+#result-box p {
+    font-size: 1.3rem;
+    margin: 20px 0;
+    /* Example of using the new darker color variable */
+    /* color: var(--main-color2-darkened); */
+}
+
+.theme-switcher {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.theme-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.theme-button i {
+    color: white;
+    font-size: 1.2rem;
+}
+
+.theme-button:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.theme-list {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 8px;
+    padding: 10px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.theme-list.show {
+    display: flex;
+}
+
+.theme-color {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.3);
+    transition: transform 0.2s ease;
+}
+
+.theme-color:hover {
+    transform: scale(1.1);
+}
+
+/* ADJUSTED: Sticky footer styles */
+footer {
+    margin-top: auto; /* Pushes the footer to the bottom */
+    margin-bottom: 20px; /* Space from the very bottom edge */
+    color: rgba(255,255,255,0.7);
+    font-size: 1.4rem; /* Adjusted for better readability */
+    text-align: center; /* Center the footer text */
+    width: 100%; /* Ensure footer spans full width */
+}
+
+footer a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+
+@media (max-width: 480px) {
+    .quiz-container {
+        padding: 1.5rem 1.8rem;
+    }
+
+    #answer-buttons li {
+        font-size: 1rem;
+    }
+
+    button {
+        font-size: 1rem;
+        padding: 0.6rem 1.2rem;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <div class="theme-switcher">
+        <button class="theme-button" onclick="toggleThemeMenu()">
+            <i class="fa-solid fa-palette"></i>
+        </button>
+        <div class="theme-list" id="themeList"></div>
+    </div>
+    <div class="quiz-container">
+        <div id="start-box">
+            <label for="category-select">Choose a Category:</label>
+            <select id="category-select"><option>Loading...</option></select>
+
+            <label for="difficulty-select">Select Difficulty:</label>
+            <select id="difficulty-select">
+                <option value="">Any</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+
+            <label for="amount-input">Number of Questions:</label>
+            <input type="number" id="amount-input" min="1" max="50" value="5" />
+
+            <button id="start-btn">Start Quiz</button>
+        </div>
+
+        <div id="quiz-box" class="hide">
+            <div class="header-row"> <h1 id="quiz-title">Quiz</h1> <p id="timer">Time left: <span id="time">15</span>s</p>
+            </div>
+            <h2 id="question-counter"></h2>
+            <h2 id="question"></h2>
+            <ul id="answer-buttons"></ul>
+            <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
+            <button id="next-btn">Next</button>
+        </div>
+
+        <div id="result-box" class="hide">
+            <h2>Quiz Completed!</h2>
+            <p id="score"></p>
+            <button onclick="location.reload()">Back</button>
+        </div>
+    </div>
+
+    <footer>
+        Made with ❤️ by <a href="https://abdelrahmanz.netlify.app/" target="_blank">AbdElRahman</a>
+    </footer>
+
+    <script>
+        const themes = [
+            ['#4facfe', '#00f2fe'],
+            ['#ff9966', '#ff5e62'],
+            ['#4a00e0', '#8e2de2'],
+            ['#7F00FF', '#E100FF'],
+            ['#56CCF2', '#2F80ED'],
+            ['#43e97b', '#38f9d7'],
+            ['#f953c6', '#b91d73'],
+            ['#30cfd0', '#330867'],
+            ['#f7797d', '#FBD786'],
+            ['#00c3ff', '#ffff1c'],
+            ['#3a7bd5', '#3a6073'],
+            ['#FF512F', '#DD2476'],
+            ['#1D976C', '#93F9B9'],
+            ['#ff6a00', '#ee0979'],
+            ['#2193b0', '#6dd5ed'],
+            ['#cc2b5e', '#753a88'],
+
+            // 7 Dark color themes added:
+            ['#232526', '#1c1c1c'],
+            ['#0f2027', '#203a43'],
+            ['#1c1c1c', '#282828'],
+            ['#232526', '#414345'],
+            ['#000000', '#434343'],
+            ['#141e30', '#243b55'],
+            ['#000428', '#004e92']
+        ];
+
+        const themeList = document.getElementById('themeList');
+
+        themes.forEach(([c1, c2]) => {
+            const colorDiv = document.createElement('div');
+            colorDiv.className = 'theme-color';
+            colorDiv.style.background = `linear-gradient(to right, ${c1}, ${c2})`;
+            colorDiv.onclick = () => applyTheme(c1, c2);
+            themeList.appendChild(colorDiv);
+        });
+
+        function toggleThemeMenu() {
+            themeList.classList.toggle('show');
+        }
+
+        function hexToRgba(hex, alpha) {
+            let c;
+            if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+                c = hex.substring(1).split('');
+                if (c.length === 3) {
+                    c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+                }
+                c = '0x' + c.join('');
+                return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + `,${alpha})`;
+            }
+            throw new Error('Bad Hex');
+        }
+
+        function darkenHexColor(hex, amount = 0.2) {
+            let c;
+            if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+                c = hex.substring(1).split('');
+                if (c.length === 3) {
+                    c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+                }
+                c = '0x' + c.join('');
+                let r = Math.floor(((c >> 16) & 255) * (1 - amount));
+                let g = Math.floor(((c >> 8) & 255) * (1 - amount));
+                let b = Math.floor((c & 255) * (1 - amount));
+                return `rgb(${r},${g},${b})`;
+            }
+            throw new Error('Bad Hex');
+        }
+
+        function applyTheme(color1, color2) {
+            document.documentElement.style.setProperty('--main-color', color1);
+            document.documentElement.style.setProperty('--main-color2', color2);
+
+            // NEW: Calculate a darker version of main-color2 and set it as a new CSS variable
+            const darkerColor2 = darkenHexColor(color2, 0.2); // You can adjust the 0.2 amount
+            document.documentElement.style.setProperty('--main-color2-darkened', darkerColor2);
+
+            themeList.classList.remove('show');
+
+            const quizContainer = document.querySelector('.quiz-container');
+
+            // The background for quizContainer is already set in CSS, no need to override with rgba(0,0,0,0.4) here.
+            // quizContainer.style.background = `rgba(0, 0, 0, 0.4)`; // This line can be removed or commented out
+
+            // Update the background of the select and input elements
+            const selectsAndInputs = quizContainer.querySelectorAll('select, input[type="number"]');
+            selectsAndInputs.forEach(el => {
+                el.style.background = `rgba(255,255,255,0.1)`; // Applied in CSS, can remove if consistent
+                el.style.color = 'white'; // Applied in CSS, can remove if consistent
+                el.style.border = '2px solid rgba(255,255,255,0.3)'; // Applied in CSS, can remove if consistent
+            });
+
+            // Update the theme-color meta tag to match the main theme color (first gradient color)
+            updateThemeColorMeta(color1);
+        }
+
+        // Call updateThemeColorMeta initially with the default theme color
+        updateThemeColorMeta(getComputedStyle(document.documentElement).getPropertyValue('--main-color').trim());
+
+        function updateThemeColorMeta(color) {
+            let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            if (!metaThemeColor) {
+                metaThemeColor = document.createElement('meta');
+                metaThemeColor.setAttribute('name', 'theme-color');
+                document.head.appendChild(metaThemeColor);
+            }
+            metaThemeColor.setAttribute('content', color);
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => {
+                        console.log('Service Worker registered:', reg.scope);
+                    })
+                    .catch(err => {
+                        console.log('Service Worker registration failed:', err);
+                    });
+            });
+        }
+
+        const API_CATEGORIES = "https://opentdb.com/api_category.php";
+        const startBox = document.getElementById("start-box");
+        const categorySelect = document.getElementById("category-select");
+        const difficultySelect = document.getElementById("difficulty-select");
+        const amountInput = document.getElementById("amount-input");
+        const startBtn = document.getElementById("start-btn");
+
+        const quizBox = document.getElementById("quiz-box");
+        // Get reference to the main quiz title (now inside quiz-box)
+        const quizTitleEl = document.getElementById("quiz-title");
+        const questionCounterEl = document.getElementById("question-counter"); // Get reference to the new counter element
+        const questionEl = document.getElementById("question");
+        const answerButtons = document.getElementById("answer-buttons");
+        const nextBtn = document.getElementById("next-btn");
+        const timerDisplay = document.getElementById("time");
+        const resultBox = document.getElementById("result-box");
+        const scoreText = document.getElementById("score");
+        const progressBar = document.getElementById("progress");
+
+        let questions = [], currentQuestionIndex = 0, score = 0;
+        let timer, timeLeft = 15;
+
+        async function loadCategories() {
+            try {
+                const res = await fetch(API_CATEGORIES);
+                const data = await res.json();
+                categorySelect.innerHTML = "";
+                data.trivia_categories.forEach(cat => {
+                    const option = document.createElement("option");
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error loading categories:", error);
+                categorySelect.innerHTML = "<option>Failed to load categories</option>";
+            }
+        }
+
+        startBtn.addEventListener("click", async () => {
+            const category = categorySelect.value;
+            const difficulty = difficultySelect.value;
+            const amount = amountInput.value;
+
+            if (!category || amount < 1) {
+                alert("Please select a category and valid amount!");
+                return;
+            }
+
+            await fetchQuestions(category, difficulty, amount);
+            startBox.classList.add("hide");
+            quizBox.classList.remove("hide");
+            showQuestion();
+        });
+
+        async function fetchQuestions(category, difficulty, amount) {
+            let url = `https://opentdb.com/api.php?amount=${amount}&type=multiple&category=${category}`;
+            if (difficulty) url += `&difficulty=${difficulty}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.response_code !== 0) {
+                    alert("No questions found for the selected criteria. Please try different options.");
+                    location.reload(); // Reload to allow user to try again
+                    return;
+                }
+                questions = data.results.map(q => ({
+                    question: decodeHTML(q.question),
+                    answers: shuffle([...q.incorrect_answers.map(decodeHTML), decodeHTML(q.correct_answer)]),
+                    correct: decodeHTML(q.correct_answer)
+                }));
+                currentQuestionIndex = 0;
+                score = 0;
+            } catch (error) {
+                console.error("Error fetching questions:", error);
+                alert("Failed to fetch questions. Please check your internet connection and try again.");
+                location.reload(); // Reload to allow user to try again
+            }
+        }
+
+        function decodeHTML(str) {
+            const txt = document.createElement("textarea");
+            txt.innerHTML = str;
+            return txt.value;
+        }
+
+        function shuffle(arr) {
+            return arr.sort(() => Math.random() - 0.5);
+        }
+
+        function showQuestion() {
+            resetState();
+            const current = questions[currentQuestionIndex];
+            if (!current) { // Handle case where no questions are loaded
+                showScore();
+                return;
+            }
+            // Update the question counter
+            questionCounterEl.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+
+            // Ensure the main quiz title remains "Quiz" during questions, as per screenshot
+            quizTitleEl.textContent = "Quiz";
+
+            questionEl.innerText = current.question;
+            current.answers.forEach(answer => {
+                const button = document.createElement("button");
+                button.innerText = answer;
+                if (answer === current.correct) button.dataset.correct = true;
+                button.addEventListener("click", selectAnswer);
+                const li = document.createElement("li");
+                li.appendChild(button);
+                answerButtons.appendChild(li);
+            });
+            updateProgressBar();
+            startTimer();
+        }
+
+        function resetState() {
+            clearInterval(timer);
+            nextBtn.style.display = "none";
+            answerButtons.innerHTML = "";
+        }
+
+        function startTimer() {
+            timeLeft = 15;
+            timerDisplay.textContent = timeLeft;
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    autoFail();
+                }
+            }, 1000);
+        }
+
+        function autoFail() {
+            Array.from(answerButtons.querySelectorAll("button")).forEach(btn => {
+                btn.disabled = true;
+                if (btn.dataset.correct === "true") btn.classList.add("correct");
+            });
+            nextBtn.style.display = "block";
+        }
+
+        function selectAnswer(e) {
+            clearInterval(timer);
+            const selected = e.target; // 'selected' is the button element
+            const correct = selected.dataset.correct === "true";
+            if (correct) {
+                selected.classList.add("correct"); // Add 'correct' class to the button
+                score++;
+            } else {
+                selected.classList.add("wrong"); // Add 'wrong' class to the selected button
+                // Also highlight the correct answer's button if the user got it wrong
+                Array.from(answerButtons.querySelectorAll("button")).forEach(btn => {
+                    if (btn.dataset.correct === "true") {
+                        btn.classList.add("correct"); // Add 'correct' to the correct button
+                    }
+                });
+            }
+            Array.from(answerButtons.querySelectorAll("button")).forEach(btn => {
+                btn.disabled = true;
+            });
+            nextBtn.style.display = "block";
+        }
+
+        nextBtn.addEventListener("click", () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showScore();
+            }
+        });
+
+        function showScore() {
+            quizBox.classList.add("hide");
+            resultBox.classList.remove("hide");
+            const percent = Math.round((score / questions.length) * 100);
+            const best = localStorage.getItem("highScore") || 0;
+            if (percent > best) {
+                localStorage.setItem("highScore", percent);
+                scoreText.innerText = `You scored ${score}/${questions.length} (${percent}%)\n\n🎉 New High Score!`;
+            } else {
+                scoreText.innerText = `You scored ${score}/${questions.length} (${percent}%)\n\nHigh Score: ${best}%`;
+            }
+            // Reset question counter or title when quiz ends
+            questionCounterEl.textContent = ""; // Clear the question counter
+            quizTitleEl.textContent = "Quiz Results"; // Update the main quiz title
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100; // +1 to show progress for current question
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            questionCounterEl.textContent = ""; // Ensure question counter is empty initially
+            quizTitleEl.textContent = "Quiz"; // Set initial main title
+        });
+    </script>
+</body>
+</html>
