@@ -35,7 +35,7 @@ Challenge your knowledge across various categories and difficulties, track your 
 ---
 
 🚀 **Live Demo**  
-[Insert Link to Live Demo Here]
+[https://quizmasterz.netlify.app/]
 
 ---
 
