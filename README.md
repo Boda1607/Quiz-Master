@@ -45,7 +45,7 @@ To run this project locally:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/swiftquiz-app.git
+   git clone https://github.com/Boda1607/swiftquiz-app.git
    cd swiftquiz-app
 ---
 ## Open index.html in your browser
